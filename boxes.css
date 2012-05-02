@@ -1,0 +1,18 @@
+.selectable .ui-selecting {
+    background: silver;
+}
+.selectable .ui-selected {
+    background: gray;
+}
+
+.selectable div {
+    float: left;
+    width: 200px;
+    height: 100px;
+    margin: 50px;
+    padding: 10px;
+
+    color: black;
+    background-color: #ffa;
+    border-radius: 10px;
+}

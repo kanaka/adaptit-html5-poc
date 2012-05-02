@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="boxes.css" rel="stylesheet" type="text/css"/>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+    <script src="selectlist.js"></script>
+
+    <script>
+        var box_data = ["Box 0", "Box 1",
+                        "Box 2", "Box 3",
+                        "Box 4", "Box 5"],
+            next_idx = box_data.length;
+
+
+        function create_pile (id, value) {
+            var box = document.createElement('div');
+            box.id = id;
+            box.innerText = value;
+            return box;
+        }
+
+        function handle_select(selected) {
+            var boxes = document.getElementById("boxes");
+
+            if (selected.length === 1) {
+                // Split
+
+                var cur_box = selected[0],
+                    msg = "Box " + next_idx + ", split of " + cur_box.innerText,
+                    new_box = create_pile("box" + next_idx, msg);
+
+                console.log("Splitting box " + cur_box.id);
+
+                next_idx++;
+                boxes.insertBefore(new_box, cur_box.nextSibling);
+
+            } else if (selected.length > 1) {
+                // Join
+                var first = selected[0],
+                    msg = " - join of [";
+
+                msg += $.map(selected, function (o) { return o.id; }).join(", ");
+                msg += "]";
+
+                for (i = 1; i < selected.length; i++ ) {
+                    boxes.removeChild(selected[i]);
+                }
+                first.id = "box" + next_idx;
+                first.innerText = "Box " + next_idx + msg;
+                next_idx++;
+            }
+
+            this.clear();
+        }
+
+
+        $(document).ready(function() {
+
+            var sl = SelectList('.selectable div',
+                                'ui-selecting', 'ui-selected',
+                                handle_select);
+
+            $.each(box_data, function (idx, value) {
+                    console.log("Creating box idx: " + idx + ", value: " + value);
+                    var box = create_pile("box" + idx, value);
+                    document.getElementById("boxes").appendChild(box);
+                });
+        });
+
+
+    </script>
+</head>
+
+<body>
+  
+<div id="boxes" class="selectable">
+</div>
+
+</body>
+</html>
