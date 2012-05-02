@@ -1,18 +1,36 @@
-.selectable .ui-selecting {
-    background: silver;
-}
-.selectable .ui-selected {
-    background: gray;
+.strip-header {
+    color: black;
+    background-color: #aaf;
+    border-radius: 5px;
+    text-align: center;
 }
 
-.selectable div {
+.strip .strip-header, .strip .pile {
     float: left;
-    width: 200px;
     height: 100px;
-    margin: 50px;
+    margin: 10px 10px 60px 10px;
     padding: 10px;
+}
 
+.strip .ui-selecting {
+    background-color: silver;
+}
+.strip .ui-selected {
+    background-color: gray;
+}
+
+.pile {
     color: black;
     background-color: #ffa;
     border-radius: 10px;
+    white-space: nowrap;
+}
+
+.pile .source {
+    background-color: #fea;
+    white-space: nowrap;
+}
+.pile .target {
+    background-color: #efa;
+    white-space: nowrap;
 }

@@ -95,7 +95,8 @@ Util.stopEvent = function(e) {
 
 function SelectList (selector, css_selecting, css_selected, callback) {
 
-var select_start = {}, select_stop = {},
+var select_start = {},
+    select_stop = {},
     api = {
         'start' : start,
         'stop'  : stop,
@@ -126,8 +127,9 @@ function stop  () {
 function clear () {
     var all = $(selector);
 
-    all.removeClass(css_selecting);
-    all.removeClass(css_selected);
+    console.log("clearing all select CSS");
+    //all.removeClass(css_selecting);
+    //all.removeClass(css_selected);
 }
 
 
@@ -172,27 +174,31 @@ function onMouseDown (event) {
     select_stop = {};
     var pos = get_selected(event);
     
-    var all = $(selector);
-    all.removeClass(css_selecting);
-    all.removeClass(css_selected);
-
     if (pos && pos.id) {
-        select_start = pos;
-        select_stop = pos;
         //console.log("mouse down on " + pos.id + " pos.x: " + pos.x + ", pos.y: " + pos.y);
 
+        select_start = pos;
+        select_stop = pos;
+
+        var all = $(selector);
+        all.removeClass(css_selecting);
+        all.removeClass(css_selected);
+
+        console.log("Adding " + css_selecting + " to " + select_start.id);
         $("#" + select_start.id).addClass(css_selecting);
+
         Util.stopEvent(event);
     }
 }
 function onMouseUp (event) {
     //console.log(">> onMouseUp " + event.clientX + "," + event.clientY);
 
-    if (select_start) {
+    if (select_start.id) {
         var all = $(selector),
             selected = slicer(all, select_start.id, select_stop.id);
 
         all.removeClass(css_selecting);
+        console.log("Adding " + css_selected + " to multiple");
         selected.addClass(css_selected);
 
         // If we doing a selection, then ignore the mouse up
@@ -206,17 +212,19 @@ function onMouseUp (event) {
 function onMouseMove (event) {
     //console.log(">> onMouseMove " + event.clientX + "," + event.clientY);
 
-    if (select_start) {
+    if (select_start.id) {
         var pos = get_selected(event);
         
         if (pos && pos.id && pos.id !== select_stop.id) {
+            //console.log("mouse move on " + pos.id + " pos.x: " + pos.x + ", pos.y: " + pos.y);
+
             select_stop = pos;
-            //console.log("mouse move on " + select_stop.id + " pos.x: " + pos.x + ", pos.y: " + pos.y);
 
             var all = $(selector),
                 selected = slicer(all, select_start.id, select_stop.id);
 
             all.removeClass(css_selecting);
+            console.log("Adding " + css_selecting + " to " + select_start.id);
             selected.addClass(css_selecting);
         }
     }
