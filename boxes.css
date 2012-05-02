@@ -1,15 +1,20 @@
+.strip {
+    display: block; 
+}
 .strip-header {
     color: black;
     background-color: #aaf;
-    border-radius: 5px;
     text-align: center;
 }
 
-.strip .strip-header, .strip .pile {
+.strip .strip-header,
+.strip .pile {
     float: left;
-    height: 100px;
+    height: 3.5em;
     margin: 10px 10px 60px 10px;
-    padding: 10px;
+    padding: 0.5em;
+
+    border-radius: 5px;
 }
 
 .strip .ui-selecting {
@@ -19,10 +24,12 @@
     background-color: gray;
 }
 
+.strip-header {
+}
+
 .pile {
     color: black;
     background-color: #ffa;
-    border-radius: 10px;
     white-space: nowrap;
 }
 
@@ -33,4 +40,6 @@
 .pile .target {
     background-color: #efa;
     white-space: nowrap;
+
+    margin-top: 1em;
 }

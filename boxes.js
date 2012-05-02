@@ -53,30 +53,40 @@ function create_strip(into, title, word_string) {
 
 function handle_select(selected) {
     console.log(">> handle_select: " + selected.length);
-    console.dir(selected[0]);
+
     var strip = selected[0].parentElement;
 
     if (selected.length === 1) {
         // Split
 
-        var cur_box = selected[0],
-            msg = "Box " + next_pile_idx + ", split of " + cur_box.innerText,
-            new_box = create_pile(msg, msg);
+        var cur_box = selected[0], new_box,
+            src = $('#' + cur_box.id + " .source")[0],
+            swords = src.innerText.split(" "),
+            tgt = $('#' + cur_box.id + " .target")[0];
 
-        console.log("Splitting box " + cur_box.id);
+        // Split based on source words
+        // Put all target words in the first pile
+        if (swords.length > 1) {
+            src.innerText = swords[0];
 
-        strip.insertBefore(new_box, cur_box.nextSibling);
+            for (i = swords.length - 1; i > 0; i--) {
+                new_box = create_pile(swords[i], "");
+                strip.insertBefore(new_box, cur_box.nextSibling);
+            }
+        }
 
     } else if (selected.length > 1) {
         // Join
         var first = selected[0],
             smsg, tmsg;
 
+        // Join source and target words into one new pile
         smsg = $.map(selected, function (o) { return $("#" + o.id + " .source").text(); }).join(" ");
         tmsg = $.map(selected, function (o) { return $("#" + o.id + " .target").text(); }).join(" ");
 
         $("#" + first.id).before(create_pile(smsg, tmsg));
 
+        // Remove all prior selected piles
         for (i = 0; i < selected.length; i++ ) {
             strip.removeChild(selected[i]);
         }
