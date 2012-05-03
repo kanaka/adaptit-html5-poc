@@ -4,7 +4,7 @@
 //
 // SelectList('.selectable div',
 //            'ui-selecting', 'ui-selected',
-//            function (selected) {
+//            function (selected, dblclick) {
 //              console.log(selected.length + " elements selected");
 //              this.clear();
 //            });
@@ -57,6 +57,23 @@ Util.getEventPosition = function (e, obj, scale) {
     return {'x': (docX - pos.x) / scale, 'y': (docY - pos.y) / scale};
 };
 
+Util.getSelected = function (event, selector) {
+    var items = $(selector);
+    for (i=0; i < items.length; i++) {
+        var obj = items[i],
+            pos = Util.getEventPosition(event, obj);
+        if ((pos.x >= 0) &&
+            (pos.y >= 0) &&
+            (pos.x < obj.clientWidth) &&
+            (pos.y < obj.clientHeight)) {
+            pos.id = obj.id;
+            return obj;
+        }
+    }
+    return null;
+}
+
+
 
 // Event registration. Based on: http://www.scottandrew.com/weblog/articles/cbs-events
 Util.addEvent = function (obj, evType, fn){
@@ -95,8 +112,9 @@ Util.stopEvent = function(e) {
 
 function SelectList (selector, css_selecting, css_selected, callback) {
 
-var select_start = {},
-    select_stop = {},
+var select_start = null,
+    select_stop = null,
+    isMouseDown = false,
     api = {
         'start' : start,
         'stop'  : stop,
@@ -107,6 +125,7 @@ var select_start = {},
 function start () {
     document.addEventListener('mousedown', onMouseDown, false);
     document.addEventListener('mouseup', onMouseUp, false);
+    document.addEventListener('dblclick', onMouseDblClick, false);
     document.addEventListener('mousemove', onMouseMove, false);
 
     document.addEventListener('touchstart', onTouchStart, false );
@@ -117,6 +136,7 @@ function start () {
 function stop  () {
     document.removeEventListener('mousedown', onMouseDown, false);
     document.removeEventListener('mouseup', onMouseUp, false);
+    document.removeEventListener('dblclick', onMouseDblClick, false);
     document.removeEventListener('mousemove', onMouseMove, false);
 
     document.removeEventListener('touchstart', onTouchStart, false );
@@ -127,31 +147,16 @@ function stop  () {
 function clear () {
     var all = $(selector);
 
-    console.log("clearing all select CSS");
-    //all.removeClass(css_selecting);
-    //all.removeClass(css_selected);
+    select_start = select_stop = null;
+
+    all.removeClass(css_selecting);
+    all.removeClass(css_selected);
 }
 
 
-function get_selected(event) {
-    var items = $(selector);
-    for (i=0; i < items.length; i++) {
-        var obj = items[i],
-            pos = Util.getEventPosition(event, obj);
-        if ((pos.x >= 0) &&
-            (pos.y >= 0) &&
-            (pos.x < obj.clientWidth) &&
-            (pos.y < obj.clientHeight)) {
-            pos.id = obj.id;
-            return pos;
-        }
-    }
-    return null;
-}
-
-function slicer(items, start_id, stop_id) {
-    var start_index = items.index($("#" + start_id)),
-        cur_index = items.index($("#" + stop_id)),
+function slicer(items, start, stop) {
+    var start_index = items.index($(start)),
+        cur_index = items.index($(stop)),
         tmp;
 
     // Order them
@@ -171,60 +176,65 @@ function slicer(items, start_id, stop_id) {
 function onMouseDown (event) {
     //console.log(">> onMouseDown ");
 
-    select_stop = {};
-    var pos = get_selected(event);
-    
-    if (pos && pos.id) {
-        //console.log("mouse down on " + pos.id + " pos.x: " + pos.x + ", pos.y: " + pos.y);
+    isMouseDown = true;
 
-        select_start = pos;
-        select_stop = pos;
+    select_stop = null;
+    var obj = Util.getSelected(event, selector);
+    
+    if (obj) {
+        select_start = obj;
+        select_stop = obj;
 
         var all = $(selector);
         all.removeClass(css_selecting);
         all.removeClass(css_selected);
 
-        console.log("Adding " + css_selecting + " to " + select_start.id);
-        $("#" + select_start.id).addClass(css_selecting);
+        $(select_start).addClass(css_selecting);
 
         Util.stopEvent(event);
     }
 }
-function onMouseUp (event) {
+function onMouseUp (event, dblclick) {
     //console.log(">> onMouseUp " + event.clientX + "," + event.clientY);
+    
+    var dblclick = dblclick || false;
 
-    if (select_start.id) {
+    isMouseDown = false;
+
+    if (select_start) {
         var all = $(selector),
-            selected = slicer(all, select_start.id, select_stop.id);
+            selected = slicer(all, select_start, select_stop);
 
         all.removeClass(css_selecting);
-        console.log("Adding " + css_selected + " to multiple");
         selected.addClass(css_selected);
 
         // If we doing a selection, then ignore the mouse up
         Util.stopEvent(event);
 
-        select_start = select_stop = {};
+        //select_start = select_stop = null;
 
-        callback.call(api, selected);
+        callback.call(api, selected, dblclick);
     }
 }
+function onMouseDblClick (event) {
+    //console.log(">> onMouseDblClick " + event.clientX + "," + event.clientY);
+
+    onMouseUp(event, true);
+}
+
 function onMouseMove (event) {
     //console.log(">> onMouseMove " + event.clientX + "," + event.clientY);
 
-    if (select_start.id) {
-        var pos = get_selected(event);
+    if (select_start && isMouseDown) {
+        var obj = Util.getSelected(event, selector);
         
-        if (pos && pos.id && pos.id !== select_stop.id) {
-            //console.log("mouse move on " + pos.id + " pos.x: " + pos.x + ", pos.y: " + pos.y);
-
-            select_stop = pos;
+        if (obj && obj.id !== select_stop.id) {
+            select_stop = obj;
 
             var all = $(selector),
-                selected = slicer(all, select_start.id, select_stop.id);
+                selected = slicer(all, select_start, select_stop);
 
             all.removeClass(css_selecting);
-            console.log("Adding " + css_selecting + " to " + select_start.id);
             selected.addClass(css_selecting);
         }
     }
@@ -233,16 +243,35 @@ function onMouseMove (event) {
 
 function onTouchStart (event) {
     //console.log(">> onTouchStart " + event.touches.length);
+
     // Just pass through
     onMouseDown(event);
 }
+
+var onTouchEnd_lastTouch = null;
 function onTouchEnd (event) {
     //console.log(">> onTouchEnd " + event.touches.length);
-    // Just pass through
+
+    // First pass through as normal mouse up event
+    // Then check if it was a double click
+
     onMouseUp(event);
+
+    // Treat double tap as DoubleClick
+    var now = new Date().getTime();
+    var lastTouch = onTouchEnd_lastTouch || now + 1;
+    /* the first time delta will be a negative number */
+    var delta = now - lastTouch;
+    if(delta < 500 && delta > 0){
+        onMouseDblClick(event);
+    }
+    onTouchEnd_lastTouch = now;
+
 }
 function onTouchMove (event) {
     //console.log(">> onTouchMove " + event.touches.length);
+
+    // Just pass through
     onMouseMove(event);
 }
 

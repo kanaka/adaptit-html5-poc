@@ -51,15 +51,19 @@ function create_strip(into, title, word_string) {
 
 }
 
-function handle_select(selected) {
-    console.log(">> handle_select: " + selected.length);
+function handle_select(selected, dblclick) {
+    //console.log(">> handle_select: " + selected.length);
 
     var strip = selected[0].parentElement;
 
-    if (selected.length === 1) {
+    if (selected.length === 1 && !dblclick) {
+        // Single element clicked/selected
+        console.log("Selected " + selected[0].id);
+    } else if (selected.length === 1 && dblclick) {
         // Split
 
         var cur_box = selected[0], new_box,
+            strip = cur_box.parentElement,
             src = $('#' + cur_box.id + " .source")[0],
             swords = src.innerText.split(" "),
             tgt = $('#' + cur_box.id + " .target")[0];
@@ -84,7 +88,7 @@ function handle_select(selected) {
         smsg = $.map(selected, function (o) { return $("#" + o.id + " .source").text(); }).join(" ");
         tmsg = $.map(selected, function (o) { return $("#" + o.id + " .target").text(); }).join(" ");
 
-        $("#" + first.id).before(create_pile(smsg, tmsg));
+        $(first).before(create_pile(smsg, tmsg));
 
         // Remove all prior selected piles
         for (i = 0; i < selected.length; i++ ) {
@@ -92,7 +96,9 @@ function handle_select(selected) {
         }
     }
 
-    this.clear();
+    if (selected.length !== 1) {
+        this.clear();
+    }
 }
 
 
