@@ -114,7 +114,8 @@ function SelectList (selector, css_selecting, css_selected, callback) {
 
 var select_start = null,
     select_stop = null,
-    isMouseDown = false,
+    mouseDownTime = null,
+    lastTouchTime = null,
     api = {
         'start' : start,
         'stop'  : stop,
@@ -176,9 +177,9 @@ function slicer(items, start, stop) {
 function onMouseDown (event) {
     //console.log(">> onMouseDown ");
 
-    isMouseDown = true;
+    mouseDownTime = new Date().getTime();;
 
-    select_stop = null;
+    select_start = select_stop = null;
     var obj = Util.getSelected(event, selector);
     
     if (obj) {
@@ -197,9 +198,16 @@ function onMouseDown (event) {
 function onMouseUp (event, dblclick) {
     //console.log(">> onMouseUp " + event.clientX + "," + event.clientY);
     
-    var dblclick = dblclick || false;
+    var dblclick = dblclick || false,
+        longclick = false;
 
-    isMouseDown = false;
+    if (mouseDownTime) {
+        if (((new Date().getTime()) - mouseDownTime) > 500) {
+            // Long click if held for more than 500ms
+            longclick = true;
+        }
+        mouseDownTime = null;
+    }
 
     if (select_start) {
         var all = $(selector),
@@ -211,9 +219,7 @@ function onMouseUp (event, dblclick) {
         // If we doing a selection, then ignore the mouse up
         Util.stopEvent(event);
 
-        //select_start = select_stop = null;
-
-        callback.call(api, selected, dblclick);
+        callback.call(api, selected, dblclick, longclick);
     }
 }
 function onMouseDblClick (event) {
@@ -225,10 +231,14 @@ function onMouseDblClick (event) {
 function onMouseMove (event) {
     //console.log(">> onMouseMove " + event.clientX + "," + event.clientY);
 
-    if (select_start && isMouseDown) {
+    if (select_start && mouseDownTime) {
         var obj = Util.getSelected(event, selector);
         
         if (obj && obj.id !== select_stop.id) {
+            // Update mouseDownTime so that long clicks aren't
+            // triggered when changing the selection
+            mouseDownTime = new Date().getTime();
+
             select_stop = obj;
 
             var all = $(selector),
@@ -248,7 +258,6 @@ function onTouchStart (event) {
     onMouseDown(event);
 }
 
-var onTouchEnd_lastTouch = null;
 function onTouchEnd (event) {
     //console.log(">> onTouchEnd " + event.touches.length);
 
@@ -259,13 +268,13 @@ function onTouchEnd (event) {
 
     // Treat double tap as DoubleClick
     var now = new Date().getTime();
-    var lastTouch = onTouchEnd_lastTouch || now + 1;
+    var lastTouch = lastTouchTime || now + 1;
     /* the first time delta will be a negative number */
     var delta = now - lastTouch;
     if(delta < 500 && delta > 0){
         onMouseDblClick(event);
     }
-    onTouchEnd_lastTouch = now;
+    lastTouchTime = now;
 
 }
 function onTouchMove (event) {
