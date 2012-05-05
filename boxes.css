@@ -36,10 +36,12 @@
 .pile .source {
     background-color: #fea;
     white-space: nowrap;
+    padding: 0.1em;
 }
 .pile .target {
     background-color: #efa;
     white-space: nowrap;
+    padding: 0.1em;
 
     margin-top: 1em;
 }

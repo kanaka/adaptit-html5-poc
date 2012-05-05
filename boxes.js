@@ -1,4 +1,5 @@
-var next_pile_idx = 0, next_strip_idx = 0;
+var next_pile_idx = 0, next_strip_idx = 0,
+    pile_edit = null;
 
 function create_pile(source_text, target_text) {
     var pile, source, target;
@@ -48,27 +49,35 @@ function create_strip(into, title, word_string) {
     strip.selectlist = SelectList('#' + id + ' .pile',
                                   'ui-selecting',
                                   'ui-selected',
-                                  {callback: handle_select});
+                                  {callback: handle_select,
+                                   longclick_time: 333});
 }
 
 function edit (pile) {
     var strip = pile.parentElement,
+        src = $('.source', pile)[0],
+        stext = src.innerText,
         tgt = $('.target', pile)[0],
-        input, ttext;
+        ttext = tgt.innerText;
 
     console.log("editing " + pile.id);
 
     // Save the target text
-    ttext = tgt.innerText;
+    
+    // If existing edit box, then blur it first
+    if (pile_edit) {
+        pile_edit.blur();
+    }
 
-    input = document.createElement('input');
-    input.type = "text";
-    input.value = ttext;
-    input.addEventListener("keydown", function (event) {
-        if ((event.keyCode === 8) ||
+    pile_edit = document.createElement('input');
+    pile_edit.type = "text";
+    pile_edit.value = ttext;
+    pile_edit.size = stext.length + 2;
+    pile_edit.addEventListener("keydown", function (event) {
+        if ((event.keyCode === 9) ||
             (event.keyCode === 13)) {
             // If tab/enter is pressed, blur and move to edit the next pile
-            input.blur();
+            pile_edit.blur();
             Util.stopEvent(event);
 
             var next_pile = pile.nextSibling;
@@ -79,30 +88,39 @@ function edit (pile) {
             }
         }
     }, false);
-
-    // Replace the text with an input area
-    tgt.innerText = "";
-    tgt.appendChild(input);
-
-    // Select and focus on the box
-    input.focus();
-    input.select();
-
-    input.onblur = function () {
+    pile_edit.onblur = function () {
         // Reset the input box to plain text
-        var new_ttext = input.value;
+        var new_ttext = pile_edit.value;
 
-        input.onblur = null;
-        tgt.removeChild(input);
+        tgt.removeChild(pile_edit);
         tgt.innerText = new_ttext;
+        pile_edit.onblur = null;
+        pile_edit = null;
 
     }
+
+    // Replace the text with the input area
+    tgt.innerText = "";
+    tgt.appendChild(pile_edit);
+
+    // Delay so that input is visible before focus (needed for iOS
+    // keyboard)
+    setTimeout(function () {
+        // Select and focus on the box
+        console.dir(pile_edit);
+        pile_edit.focus();
+        pile_edit.select();
+    }, 10);
 }
 
 function handle_select(selected, dblclick, longclick) {
     //console.log(">> handle_select: " + selected.length);
 
     var strip = selected[0].parentElement;
+
+    if (pile_edit) {
+        pile_edit.blur();
+    }
 
     if (selected.length === 1) {
         if (longclick) {
