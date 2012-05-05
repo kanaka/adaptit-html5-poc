@@ -2,18 +2,27 @@
 //
 // Here is an example:
 //
-// SelectList('.selectable div',
-//            'ui-selecting', 'ui-selected',
-//            function (selected, dblclick) {
-//              console.log(selected.length + " elements selected");
-//              this.clear();
-//            });
+// SelectList('.selectable div', selecting_class, selected_class, options);
 //
+//   - selecting_class : CSS class name for selecting elements
+//   - selected_class  : CSS class name for selected elements
 //
-//  - During selection the ui-selecting class will be applied to each
-//  - After selection the ui-selected class will be applied to each
-//    and the colection of selected elements is passed to the callback
-//    which logs the number selected and clears the selection.
+//   - Where options is:
+//     {
+//       callback        : function (select_list, dblclick, longclick),
+//       longclick_time  : <longclick_ms>,
+//       dblclick_time   : <dblclick_ms>
+//     }
+//
+//   - During selection the selecting_class CSS class name will be
+//     applied to each element being selected
+//   - After selection the selected_class CSS class name will be
+//     applied to each selected element and the collection of selected
+//     elements is passed to the callback.
+//   - A SelectList object has the following methods:
+//     - start : enable selecting (default after instantiation)
+//     - stop  : disable selecting
+//     - clear : clear any current selection
 //
 // Requires jQuery
 
@@ -110,7 +119,7 @@ Util.stopEvent = function(e) {
 
 
 
-function SelectList (selector, css_selecting, css_selected, callback) {
+function SelectList (selector, selecting_class, selected_class, options) {
 
 var select_start = null,
     select_stop = null,
@@ -122,6 +131,16 @@ var select_start = null,
         'clear' : clear
     };
 
+// options defaults
+if (!options.longclick_time) {
+    options.longclick_time = 333;
+}
+if (!options.dblclick_time) {
+    options.dblclick_time = 500;
+}
+if (!options.callback) {
+    options.callback = function () {};
+}
 
 function start () {
     document.addEventListener('mousedown', onMouseDown, false);
@@ -150,8 +169,8 @@ function clear () {
 
     select_start = select_stop = null;
 
-    all.removeClass(css_selecting);
-    all.removeClass(css_selected);
+    all.removeClass(selecting_class);
+    all.removeClass(selected_class);
 }
 
 
@@ -187,10 +206,10 @@ function onMouseDown (event) {
         select_stop = obj;
 
         var all = $(selector);
-        all.removeClass(css_selecting);
-        all.removeClass(css_selected);
+        all.removeClass(selecting_class);
+        all.removeClass(selected_class);
 
-        $(select_start).addClass(css_selecting);
+        $(select_start).addClass(selecting_class);
 
         Util.stopEvent(event);
     }
@@ -199,11 +218,12 @@ function onMouseUp (event, dblclick) {
     //console.log(">> onMouseUp " + event.clientX + "," + event.clientY);
     
     var dblclick = dblclick || false,
+        now = new Date().getTime(),
         longclick = false;
 
     if (mouseDownTime) {
-        if (((new Date().getTime()) - mouseDownTime) > 500) {
-            // Long click if held for more than 500ms
+        if (now - mouseDownTime > options.longclick_time) {
+            // Long click if held for more than options.longclick_time
             longclick = true;
         }
         mouseDownTime = null;
@@ -213,13 +233,13 @@ function onMouseUp (event, dblclick) {
         var all = $(selector),
             selected = slicer(all, select_start, select_stop);
 
-        all.removeClass(css_selecting);
-        selected.addClass(css_selected);
+        all.removeClass(selecting_class);
+        selected.addClass(selected_class);
 
         // If we doing a selection, then ignore the mouse up
         Util.stopEvent(event);
 
-        callback.call(api, selected, dblclick, longclick);
+        options.callback.call(api, selected, dblclick, longclick);
     }
 }
 function onMouseDblClick (event) {
@@ -244,8 +264,8 @@ function onMouseMove (event) {
             var all = $(selector),
                 selected = slicer(all, select_start, select_stop);
 
-            all.removeClass(css_selecting);
-            selected.addClass(css_selecting);
+            all.removeClass(selecting_class);
+            selected.addClass(selecting_class);
         }
     }
 }
@@ -271,7 +291,7 @@ function onTouchEnd (event) {
     var lastTouch = lastTouchTime || now + 1;
     /* the first time delta will be a negative number */
     var delta = now - lastTouch;
-    if(delta < 500 && delta > 0){
+    if(delta < options.dblclick_time && delta > 0){
         onMouseDblClick(event);
     }
     lastTouchTime = now;

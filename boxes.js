@@ -48,7 +48,7 @@ function create_strip(into, title, word_string) {
     strip.selectlist = SelectList('#' + id + ' .pile',
                                   'ui-selecting',
                                   'ui-selected',
-                                  handle_select);
+                                  {callback: handle_select});
 }
 
 function edit (pile) {
