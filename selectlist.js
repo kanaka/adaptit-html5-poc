@@ -109,12 +109,19 @@ Util.removeEvent = function(obj, evType, fn){
     }
 };
 
-Util.stopEvent = function(e) {
+
+Util.stopPropagation = function(e) {
     if (e.stopPropagation) { e.stopPropagation(); }
     else                   { e.cancelBubble = true; }
-
+};
+Util.preventDefault = function(e) {
     if (e.preventDefault)  { e.preventDefault(); }
     else                   { e.returnValue = false; }
+};
+
+Util.stopEvent = function(e) {
+    Util.stopPropagation(e);
+    Util.preventDefault(e);
 };
 
 
@@ -194,7 +201,7 @@ function slicer(items, start, stop) {
 //
 
 function onMouseDown (event) {
-    //console.log(">> onMouseDown ");
+    //console.log(">> onMouseDown " + event.clientX + "," + event.clientY);
 
     mouseDownTime = new Date().getTime();;
 
