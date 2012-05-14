@@ -1,24 +1,70 @@
-var next_pile_idx = 0, next_strip_idx = 0,
-    pile_edit = null;
+var next_pile_idx = 0, next_strip_idx = 0;
 
 function create_pile(source_text, target_text) {
-    var pile, source, target;
+    var pile, source, target, edit;
 
     pile = document.createElement('div');
     pile.id = "pile-" + next_pile_idx;
     pile.className = "pile";
-    next_pile_idx++;
 
-    source = document.createElement('div'),
+    source = document.createElement('div');
+    source.id = "source-" + next_pile_idx;
     source.className = 'source';
-    source.innerText = source_text;
+    source.innerHTML = source_text;
     pile.appendChild(source);
 
-    target = document.createElement('div'),
+    target = document.createElement('div');
+    target.id = "target-" + next_pile_idx;
     target.className = 'target';
-    target.innerText = target_text;
     pile.appendChild(target);
 
+    edit = document.createElement('input');
+    edit.id = "target-edit-" + next_pile_idx;
+    edit.className = "target-edit";
+    edit.type = "text";
+    edit.value = target_text;
+    edit.size = target_text.length + 2;
+
+    // Allow clicking directly on the input box
+    edit.addEventListener("mousedown", function (event) {
+        //console.log('mousedown on ' + edit.id);
+        Util.stopPropagation(event);
+    }, false);
+    edit.addEventListener("keydown", function (event) {
+        if ((event.keyCode === 9) ||
+            (event.keyCode === 13)) {
+            var next_edit = null;
+            // If tab/enter is pressed, blur and move to edit the next pile
+            Util.stopEvent(event);
+            edit.blur();
+
+            if (event.shiftKey) {
+                next_edit = pile.previousSibling;
+                if (next_edit.id.substr(0,4) !== "pile") {
+                    // Probably a header
+                    next_edit = null;
+                }
+            } else {
+                next_edit = pile.nextSibling;
+            }
+            if (next_edit) {
+                //console.log("next edit: " + next_edit.id);
+                // Do it in a new execution context for iOS
+                //setTimeout(function () { edit_pile(next_edit); }, 10);
+                edit_pile(next_edit);
+            }
+        }
+    }, false);
+    edit.onblur = function () {
+        // Reset the input box to plain text
+        var new_ttext = edit.value;
+        //console.log("new_ttext.length: " + new_ttext.length);
+
+        edit.size = new_ttext.length;
+    }
+    target.appendChild(edit);
+
+    next_pile_idx++;
     return pile;
 }
 
@@ -35,7 +81,7 @@ function create_strip(into, title, word_string) {
     header = document.createElement('div');
     header.id = id + "-header";
     header.className = "strip-header";
-    header.innerText = title;
+    header.innerHTML = title;
     strip.appendChild(header);
 
     for (i = 0; i < words.length; i++) {
@@ -53,94 +99,47 @@ function create_strip(into, title, word_string) {
                                    longclick_time: 333});
 }
 
-function edit (pile) {
-    var strip = pile.parentElement,
-        src = $('.source', pile)[0],
-        stext = src.innerText,
-        tgt = $('.target', pile)[0],
-        ttext = tgt.innerText;
+function edit_pile (pile) {
+    var edit = $(".target .target-edit", pile)[0];
 
-    console.log("editing " + pile.id);
+    //console.log("editing " + pile.id);
 
-    // Save the target text
-    
-    // If existing edit box, then blur it first
-    if (pile_edit) {
-        pile_edit.blur();
-    }
-
-    pile_edit = document.createElement('input');
-    pile_edit.type = "text";
-    pile_edit.value = ttext;
-    pile_edit.size = stext.length + 2;
-    pile_edit.addEventListener("keydown", function (event) {
-        if ((event.keyCode === 9) ||
-            (event.keyCode === 13)) {
-            // If tab/enter is pressed, blur and move to edit the next pile
-            pile_edit.blur();
-            Util.stopEvent(event);
-
-            var next_pile = pile.nextSibling;
-            console.log("next sibling: " + next_pile.id);
-            if (next_pile) {
-                // Do it in new context
-                setTimeout(function () { edit(next_pile); }, 10);
-            }
-        }
-    }, false);
-    pile_edit.onblur = function () {
-        // Reset the input box to plain text
-        var new_ttext = pile_edit.value;
-
-        tgt.removeChild(pile_edit);
-        tgt.innerText = new_ttext;
-        pile_edit.onblur = null;
-        pile_edit = null;
-
-    }
-
-    // Replace the text with the input area
-    tgt.innerText = "";
-    tgt.appendChild(pile_edit);
-
-    // Delay so that input is visible before focus (needed for iOS
-    // keyboard)
-    setTimeout(function () {
-        // Select and focus on the box
-        console.dir(pile_edit);
-        pile_edit.focus();
-        pile_edit.select();
-    }, 10);
+    //setTimeout(function () { edit.focus(); }, 20);
+    //edit.select();
+    edit.setSelectionRange(0, 9999);
+    edit.focus();
 }
 
 function handle_select(selected, dblclick, longclick) {
     //console.log(">> handle_select: " + selected.length);
 
-    var strip = selected[0].parentElement;
+    var strip = selected[0].parentNode;
 
+    /*
     if (pile_edit) {
         pile_edit.blur();
     }
+    */
 
     if (selected.length === 1) {
         if (longclick) {
             // Long click to edit pile
             
-            edit(selected[0]);
+            edit_pile(selected[0]);
 
         } else if (dblclick) {
             // Split one pile
 
             var cur_box = selected[0], new_box,
-                strip = cur_box.parentElement,
+                strip = cur_box.parentNode,
                 src = $('#' + cur_box.id + " .source")[0],
-                swords = src.innerText.split(" "),
+                swords = src.innerHTML.split(" "),
                 tgt = $('#' + cur_box.id + " .target")[0];
 
             // Split based on source words
             // Put all target words in the first pile
             if (swords.length > 1) {
-                src.innerText = swords[0];
+                src.innerHTML = swords[0];
 
                 for (i = swords.length - 1; i > 0; i--) {
                     new_box = create_pile(swords[i], "");
@@ -150,7 +149,7 @@ function handle_select(selected, dblclick, longclick) {
         } else if (!dblclick) {
             // Single pile clicked/selected
 
-            console.log("Selected " + selected[0].id);
+            //console.log("Selected " + selected[0].id);
 
         }
 
@@ -161,8 +160,12 @@ function handle_select(selected, dblclick, longclick) {
             smsg, tmsg, new_pile;
 
         // Join source and target words into one new pile
-        smsg = $.map(selected, function (o) { return $("#" + o.id + " .source").text(); }).join(" ");
-        tmsg = $.map(selected, function (o) { return $("#" + o.id + " .target").text(); }).join(" ");
+        smsg = $.map(selected, function (o) {
+            return $("#" + o.id + " .source").text();
+        }).join(" ");
+        tmsg = $.map(selected, function (o) {
+            return $("#" + o.id + " .target .target-edit")[0].value;
+        }).join(" ");
 
         new_pile = create_pile(smsg, tmsg);
         $(first).before(new_pile);
