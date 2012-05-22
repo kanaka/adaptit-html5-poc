@@ -1,5 +1,20 @@
 var next_pile_idx = 0, next_strip_idx = 0;
 
+function load_file(file, callback) {
+    var reader = new FileReader();
+
+    // Closure to capture the file information.
+    reader.onload = (function(theFile) {
+        return function(e) {
+            //console.log("Loaded file: " + theFile.name);
+            callback(e.target.result);
+        };
+    })(file);
+
+    // Read in the image file as a data URL.
+    reader.readAsText(file);
+}
+
 function create_pile(source_text, target_text) {
     var pile, source, target, edit;
 
@@ -68,10 +83,9 @@ function create_pile(source_text, target_text) {
     return pile;
 }
 
-function create_strip(into, title, word_string) {
+function add_strip(into, title, source_words, target_words) {
     var id = "strip-" + next_strip_idx,
-        strip, header, pile,
-        i, words = word_string.split(' ');
+        strip, header, pile, i;
 
     strip = document.createElement('div');
     strip.id = id;
@@ -84,8 +98,13 @@ function create_strip(into, title, word_string) {
     header.innerHTML = title;
     strip.appendChild(header);
 
-    for (i = 0; i < words.length; i++) {
-        var pile = create_pile(words[i], "*" + words[i] + "*");
+    for (i = 0; i < source_words.length; i++) {
+        var source_word = source_words[i];
+        var target_word = target_words[i];
+        if (typeof(target_word) === "undefined") {
+            target_word = "*" + source_word + "*";
+        }
+        var pile = create_pile(source_word, target_word);
         strip.appendChild(pile);
     }
 
@@ -183,10 +202,98 @@ function handle_select(selected, dblclick, longclick) {
 }
 
 
-$(document).ready(function() {
-    var v;
+// The above routines are fairly generic. The below routines are
+// a bit more specific to the current demo.
 
-    for (v = 1; v <= source_text.verses; v++) {
-        var strip = create_strip("chapter", v, source_text[v]);
+function reset_chapter() {
+    // Reset the rendered piles and counters
+    $('#chapter')[0].innerHTML = "";
+    next_pile_idx = 0;
+    next_strip_idx = 0;
+}
+
+function replace_source_text(text) {
+    var source_text, verses, i, pre, vidx, vtxt;
+
+    reset_chapter();
+
+    // Remove newlines
+    source_text = text.replace(/ *\n/g, '');
+    // Remove multiple spaces
+    source_text = source_text.replace(/   */g, ' ');
+    // Split on numbers
+    verses = source_text.match(/\d\d* [^\d][^\d]*/g);
+
+    for (i = 0; i < verses.length; i++) {
+        // Make sure we start with a number
+        pre = verses[i].match(/^\d\d* /);
+        if (!pre) {
+            console.error("Invalid verse: " + verses[i]);
+            break;
+        }
+        // Parse out the verse number and 
+        vidx = parseInt(pre[0], 10);
+        vtxt = verses[i].substr(pre[0].length);
+
+        // Remove leading/trailing spaces
+        vtxt = vtxt.replace(/^ */, '');
+        vtxt = vtxt.replace(/ *$/, '');
+
+        add_strip("chapter", vidx, vtxt.split(' '), []);
     }
+}
+
+function get_data() {
+    // [{title: "", source_words: [], target_words: []]},
+    var data = [], header, source_words, target_words;
+    $("#chapter .strip").each(function (i, strip) {
+        header = $(".strip-header", strip)[0];
+        source_words = [];
+        target_words = [];
+        $("#" + strip.id + " .pile").each(function (i, pile) {
+            source_words.push($(".source", pile)[0].innerHTML);
+            target_words.push($(".target-edit", pile)[0].value);
+        });
+        data.push({title: header.innerHTML,
+                   source_words: source_words,
+                   target_words: target_words});
+    });
+    return data;
+}
+
+function set_data(data) {
+    reset_chapter();
+    $.each(data, function (i, strip) {
+        add_strip("chapter", strip.title, strip.source_words, strip.target_words);
+    });
+}
+
+//
+// I/O routines
+
+function load_source_url(url) {
+    $.ajax({url: "verses.txt",
+            success: function (data) {
+                replace_source_text(data);
+            }});
+}
+
+function load_source_file(file) {
+    load_file(file, replace_source_text);
+}
+
+function export_file (filename) {
+    //console.log("in save_file");
+    var data = get_data();
+    var bb = new BlobBuilder();
+    bb.append(JSON.stringify(data));
+    saveAs(bb.getBlob("text/plain;charset=utf-8"), filename);
+}
+
+function import_file (file) {
+    load_file(file, function (data) { set_data(JSON.parse(data)); });
+}
+
+$(document).ready(function() {
+    replace_source_text("1 This is a test verse. 2 A second test verse.");
 });

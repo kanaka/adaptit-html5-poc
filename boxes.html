@@ -9,25 +9,62 @@
     <link href="boxes.css" rel="stylesheet" type="text/css"/>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+    <script src="BlobBuilder.js"> </script>
+    <script src="FileSaver.js"> </script>
     <script src="selectlist.js"></script>
     <script src="boxes.js"> </script>
     <script>
-        var source_text = {
-            verses: 8,
-            1: "Then I saw 'a new heaven and a new earth,' for the first heaven and the first earth had passed away, and there was no longer any sea.",
-            2: "I saw the Holy City, the new Jerusalem, coming down out of heaven from God, prepared as a bride beautifully dressed for her husband.",
-            3: "And I heard a loud voice from the throne saying, 'Look! God’s dwelling place is now among the people, and he will dwell with them. They will be his people, and God himself will be with them and be their God.",
-            4: "He will wipe every tear from their eyes. There will be no more death or mourning or crying or pain, for the old order of things has passed away.'",
-            5: "He who was seated on the throne said, 'I am making everything new!' Then he said, 'Write this down, for these words are trustworthy and true.'",
-            6: "He said to me: 'It is done. I am the Alpha and the Omega, the Beginning and the End. To the thirsty I will give water without cost from the spring of the water of life.",
-            7: "Those who are victorious will inherit all this, and I will be their God and they will be my children.",
-            8: "But the cowardly, the unbelieving, the vile, the murderers, the sexually immoral, those who practice magic arts, the idolaters and all liars —they will be consigned to the fiery lake of burning sulfur. This is the second death.'"};
+        function handle_load_url () {
+            load_source_url($('#load-url')[0]);
+        }
+        function handle_load_file (evt) {
+            var files = evt.target.files;
+            if (files.length < 1) {
+                console.error("handle_load_file called without file");
+                return;
+            }
+            load_source_file(files[0]);
+        }
+        function handle_export_file () {
+            export_file($("#export-file")[0].value);
+        }
+        function handle_import_file (evt) {
+            var files = evt.target.files;
+            if (files.length < 1) {
+                console.error("handle_import_file called without file");
+                return;
+            }
+            import_file(files[0]);
+        }
 
+        $(document).ready(function () {
+            $('#url-btn')[0].onclick = handle_load_url;
+            $('#file-btn')[0].onchange = handle_load_file;
+            $('#export-btn')[0].onclick = handle_export_file;
+            $('#import-btn')[0].onchange = handle_import_file;
+        });
     </script>
 </head>
 
 <body>
-  
+
+    Load source text
+    <input id='url-btn' type="button" value="from URL:">
+    <input id="load-url" type="text" value="verses.txt">
+
+    <br>
+    Load source text
+    <input id='file-btn' type="file" name="files[]"/>
+
+    <br>
+    Export
+    <input id="export-btn" type="button" value="Download">
+    <input id="export-file" type="text" value="backup.json">
+
+    <br>
+    Import
+    <input id='import-btn' type="file" name="files[]"/>
+
     <div id="chapter">
     </div>
 
