@@ -1,4 +1,5 @@
-var next_pile_idx = 0, next_strip_idx = 0;
+var next_pile_idx = 0, next_strip_idx = 0,
+    GH_API_BASE = "https://api.github.com";
 
 function load_file(file, callback) {
     var reader = new FileReader();
@@ -272,14 +273,18 @@ function set_data(data) {
 // I/O routines
 
 function load_source_url(url) {
-    $.ajax({url: "verses.txt",
+    $.ajax({url: url,
             success: function (data) {
                 replace_source_text(data);
+                $("#status-bar")[0].innerHTML = "Loaded URL '" + url + "'";
             }});
 }
 
 function load_source_file(file) {
-    load_file(file, replace_source_text);
+    load_file(file, function (data) {
+            replace_source_text(data);
+            $("#status-bar")[0].innerHTML = "Loaded file '" + file.name + "'";
+        });
 }
 
 function export_file (filename) {
@@ -288,10 +293,65 @@ function export_file (filename) {
     var bb = new BlobBuilder();
     bb.append(JSON.stringify(data));
     saveAs(bb.getBlob("text/plain;charset=utf-8"), filename);
+    $("#status-bar")[0].innerHTML = "Exported file '" + filename + "'";
 }
 
 function import_file (file) {
-    load_file(file, function (data) { set_data(JSON.parse(data)); });
+    load_file(file, function (data) {
+            set_data(JSON.parse(data));
+            $("#status-bar")[0].innerHTML = "Imported file '" + file.name + "'";
+        });
+}
+
+function import_gist (ghToken, gistnum, filename) {
+    var url = GH_API_BASE + "/gists/" + gistnum + "?access_token=" + ghToken;
+    $.ajax(url, {
+        dataType: 'json',
+        success: function (data) {
+            var content = data.files[filename].content;
+            console.log("content: " + content);
+            try {
+                set_data(JSON.parse(content));
+            } catch (exc) {
+                alert("Failed to parse gist data"); 
+                return;
+            }
+            $("#status-bar")[0].innerHTML = "Imported gist " + gistnum + " - '" + filename + "'";
+        },
+        error: function (error) {
+            alert("Failed to import gist: " + error);
+        }
+    });
+}
+
+function export_gist (ghToken, filename) {
+    var url = GH_API_BASE + "/gists" + "?access_token=" + ghToken,
+        content = JSON.stringify(get_data()),
+        data = {
+            "description": "adaptit export file",
+            "public": false,
+            "files": {}
+        }, json;
+
+    data.files["adaptit"] = {};
+    data.files["adaptit"].content = content;
+    json = JSON.stringify(data);
+    console.log("posting:", json);
+
+    $.ajax(url, {
+        type: 'POST',
+        dataType: 'json',
+        contentType: 'application/json',
+        data: json,
+        success: function (data) {
+            var gistnum = data.id;
+            $("#import-gist-num")[0].value = gistnum; // TODO: shouldn't have awareness of UI
+            $("#status-bar")[0].innerHTML = "Exported gist " + gistnum + " - '" + filename + "'";
+        },
+        error: function (error) {
+            alert("Failed to export gist: " + error);
+        }
+    });
 }
 
 $(document).ready(function() {

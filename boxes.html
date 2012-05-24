@@ -16,12 +16,12 @@
     <script src="boxes.js"> </script>
     <script>
         function handle_load_url () {
-            load_source_url($('#load-url')[0]);
+            load_source_url($("#load-url")[0].value);
         }
         function handle_load_file (evt) {
             var files = evt.target.files;
             if (files.length < 1) {
-                console.error("handle_load_file called without file");
+                alert("File load called without file");
                 return;
             }
             load_source_file(files[0]);
@@ -32,48 +32,81 @@
         function handle_import_file (evt) {
             var files = evt.target.files;
             if (files.length < 1) {
-                console.error("handle_import_file called without file");
+                alert("Please enter a file name");
                 return;
             }
             import_file(files[0]);
         }
 
+        function handle_export_gist () {
+            var gh_token = $("#gh-token")[0].value;
+            if (!gh_token) {
+                alert("Please enter a github access token");
+                return;
+            }
+            export_gist(gh_token, "adaptit");
+        }
+
+        function handle_import_gist () {
+            var gh_token = $("#gh-token")[0].value,
+                gistnum = $("#import-gist-num")[0].value;
+            if (!gh_token) {
+                alert("Please enter a github access token");
+                return;
+            }
+            if (!gistnum) {
+                alert("Please enter a gist number");
+                return;
+            }
+            import_gist(gh_token, gistnum, "adaptit");
+        }
+
         $(document).ready(function () {
-            $('#url-btn')[0].onclick = handle_load_url;
-            $('#file-btn')[0].onchange = handle_load_file;
-            $('#export-btn')[0].onclick = handle_export_file;
-            $('#import-btn')[0].onchange = handle_import_file;
+            $("#url-btn")[0].onclick = handle_load_url;
+            $("#file-btn")[0].onchange = handle_load_file;
+            $("#import-file-btn")[0].onchange = handle_import_file;
+            $("#import-gist-btn")[0].onclick = handle_import_gist;
+            $("#export-file-btn")[0].onclick = handle_export_file;
+            $("#export-gist-btn")[0].onclick = handle_export_gist;
         });
     </script>
 </head>
 
 <body>
-    <div class="status-bar">
+    <div id="status-bar" class="status-bar">
         Status Bar
     </div>
 
     <div class="menu">
         Github access token:
-        <input id='token' type="text" value="">
+        <input id="gh-token" type="text" value="">
 
         <br>
         Load source text
-        <input id='url-btn' type="button" value="from URL:">
+        <input id="url-btn" type="button" value="from URL:">
         <input id="load-url" type="text" value="verses.txt">
 
         <br>
         Load source text
-        <input id='file-btn' type="file" name="files[]"/>
+        <input id="file-btn" type="file" name="files[]"/>
 
         <br>
         Import
-        <input id='import-btn' type="file" name="files[]"/>
+        <input id="import-file-btn" type="file" name="files[]"/>
+
+        <br>
+        Import
+        <input id="import-gist-btn" type="button" value="from Github Gist:">
+        #<input id="import-gist-num" type="text" value="">
 
         <br>
         Export
-        <input id="export-btn" type="button" value="Download">
-        <input id="export-file" type="text" value="backup.json">
+        <input id="export-file-btn" type="button" value="Download">
+        <input id="export-file-file" type="text" value="backup.json">
 
+        <br>
+        Export
+        <input id="export-gist-btn" type="button" value="to Github Gist">
     </div>
 
     <div id="chapter" class="chapter">
