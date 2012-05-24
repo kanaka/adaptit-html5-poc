@@ -1,3 +1,23 @@
+body {
+    padding: 0px;
+    margin: 0px;
+}
+
+.status-bar {
+    width: 100%;
+    background-color: #ffe;
+    padding: 5px;
+}
+
+.menu {
+    margin: 5px;
+}
+
+.chapter {
+    margin: 5px;
+}
+
+
 .strip {
     display: block; 
 }

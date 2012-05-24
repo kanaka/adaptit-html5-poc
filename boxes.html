@@ -8,9 +8,10 @@
 
     <link href="boxes.css" rel="stylesheet" type="text/css"/>
 
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
     <script src="BlobBuilder.js"> </script>
     <script src="FileSaver.js"> </script>
+
     <script src="selectlist.js"></script>
     <script src="boxes.js"> </script>
     <script>
@@ -47,25 +48,35 @@
 </head>
 
 <body>
+    <div class="status-bar">
+        Status Bar
+    </div>
 
-    Load source text
-    <input id='url-btn' type="button" value="from URL:">
-    <input id="load-url" type="text" value="verses.txt">
+    <div class="menu">
+        Github access token:
+        <input id='token' type="text" value="">
 
-    <br>
-    Load source text
-    <input id='file-btn' type="file" name="files[]"/>
+        <br>
+        Load source text
+        <input id='url-btn' type="button" value="from URL:">
+        <input id="load-url" type="text" value="verses.txt">
 
-    <br>
-    Export
-    <input id="export-btn" type="button" value="Download">
-    <input id="export-file" type="text" value="backup.json">
+        <br>
+        Load source text
+        <input id='file-btn' type="file" name="files[]"/>
 
-    <br>
-    Import
-    <input id='import-btn' type="file" name="files[]"/>
+        <br>
+        Import
+        <input id='import-btn' type="file" name="files[]"/>
 
-    <div id="chapter">
+        <br>
+        Export
+        <input id="export-btn" type="button" value="Download">
+        <input id="export-file" type="text" value="backup.json">
+
+    </div>
+
+    <div id="chapter" class="chapter">
     </div>
 
 </body>
