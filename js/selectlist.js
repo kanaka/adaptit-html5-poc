@@ -1,6 +1,11 @@
 // SelectList: make a linear group of DOM elements mouse/touch selectable
+// Copyright (C) 2012 Joel Martin
 //
-// Here is an example:
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// SelectList example:
 //
 // SelectList('.selectable div', selecting_class, selected_class, options);
 //
@@ -25,6 +30,11 @@
 //     - clear : clear any current selection
 //
 // Requires jQuery
+//
+// Issues:
+//   - Does not work if the DOM elements to select do not all have IDs
+//   - Does not work with inline lists. clientWidth/Height is not
+//     right thing to compare against.
 
 
 // Utility functions
@@ -71,6 +81,8 @@ Util.getSelected = function (event, selector) {
     for (i=0; i < items.length; i++) {
         var obj = items[i],
             pos = Util.getEventPosition(event, obj);
+            console.log("pos: " + pos.x + ", " + pos.y + " " + obj.clientWidth + ", " + obj.clientHeight);
+            console.dir(obj);
         if ((pos.x >= 0) &&
             (pos.y >= 0) &&
             (pos.x < obj.clientWidth) &&
@@ -139,6 +151,9 @@ var select_start = null,
     };
 
 // options defaults
+if (typeof options === "undefined") {
+    options = {};
+}
 if (!options.longclick_time) {
     options.longclick_time = 333;
 }
@@ -209,6 +224,7 @@ function onMouseDown (event) {
     var obj = Util.getSelected(event, selector);
     
     if (obj) {
+        console.log("here2", obj.id);
         select_start = obj;
         select_stop = obj;
 
