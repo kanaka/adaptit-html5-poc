@@ -1,3 +1,9 @@
+// Copyright (C) 2012 Joel Martin
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
 var next_pile_idx = 0, next_strip_idx = 0,
     GH_API_BASE = "https://api.github.com";
 

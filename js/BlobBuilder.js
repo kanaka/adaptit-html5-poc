@@ -4,7 +4,7 @@
  * 
  * By Eli Grey, http://eligrey.com
  * License: X11/MIT
- *   See LICENSE.md
+ *   See FF_BB_LICENSE.md
  */
 
 /*global self, unescape */
